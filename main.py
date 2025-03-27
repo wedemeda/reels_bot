@@ -50,7 +50,7 @@ def link_from_inst(url):
     try:
         wait = WebDriverWait(driver, 5)
         button = wait.until(
-            EC.presence_of_element_located((By.XPATH, "//p[@class='fc-button-label' and text()='Einwilligen']")))
+            EC.presence_of_element_located((By.CSS_SELECTOR, ".fc-button.fc-cta-consent.fc-primary-button")))
 
         if button.is_displayed():
             button.click()
