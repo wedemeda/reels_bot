@@ -31,6 +31,7 @@ dp = Dispatcher()
 def get_geckodriver_path():
     system = platform.system().lower()
     arch = platform.machine().lower()
+    driver_path = None
 
     # Определяем правильный путь к драйверу
     if system == 'windows':
@@ -102,7 +103,7 @@ async def send_welcome(message: types.Message):
 async def handle_audio_message(message: types.Message):
     if message.chat.id not in ALLOWED_USERS:
         return
-
+    file_path = None
     try:
         # 1. Скачиваем аудиофайл
         file = await bot.get_file(message.audio.file_id)
@@ -155,9 +156,8 @@ async def safe_delete(file_path: str):
     try:
         if os.path.exists(file_path):
             os.remove(file_path)
-    except:
+    except (FileNotFoundError, PermissionError, OSError) as e:
         pass
-
 
 # Запуск бота
 async def main():
