@@ -7,7 +7,7 @@ import time
 from aiogram import Bot, Dispatcher, types, F
 from aiogram.client.telegram import TelegramAPIServer
 from aiogram.filters import Command
-from aiogram.types import Message, URLInputFile, ContentType, FSInputFile
+from aiogram.types import Message, URLInputFile, FSInputFile
 from dotenv import load_dotenv
 from selenium import webdriver
 from selenium.common import TimeoutException, NoSuchElementException
@@ -29,7 +29,6 @@ dp = Dispatcher()
 
 
 def link_from_inst(url):
-   
     if platform.system() == "Windows":
         service = webdriver.FirefoxService(executable_path='geckodriver-v0.36.0-win64/geckodriver.exe')
     else:
@@ -84,37 +83,42 @@ async def send_welcome(message: types.Message):
         await bot.send_video(message.chat.id, video=video_file, width=720, height=1280)
 
 
-@dp.message(F.audio)  
+@dp.message(F.audio)
 async def handle_audio_message(message: types.Message):
-    
     if message.chat.id not in ALLOWED_USERS:
         return
-    
+
     try:
         # 1. Скачиваем аудиофайл
         file = await bot.get_file(message.audio.file_id)
         file_path = f"temp_audio_{message.message_id}.mp3"  # Уникальное имя файла
-        
+
         # 2. Асинхронное скачивание
         await bot.download_file(file.file_path, destination=file_path)
-        
+
         # 3. Получаем длительность аудио
         duration = await get_audio_duration(file_path)
-        
+
         # 4. Отправляем голосовое сообщение обратно
         voice_message = FSInputFile(file_path)
         await message.answer_voice(voice_message, duration=int(duration))
-        
+
     except Exception as e:
         await message.answer(f"⚠️ Ошибка: {str(e)}")
     finally:
         # 5. Удаляем временный файл
         await safe_delete(file_path)
 
+
 async def get_audio_duration(file_path: str) -> float:
     """Получает длительность аудио через ffprobe (асинхронно)"""
+
+    if platform.system() == "Windows":
+        ffprobe_path = "ffprobe.exe"
+    else:
+        ffprobe_path = "ffprobe"
     process = await asyncio.create_subprocess_exec(
-        'ffprobe',
+        ffprobe_path,
         '-v', 'error',
         '-show_entries', 'format=duration',
         '-of', 'default=noprint_wrappers=1:nokey=1',
@@ -122,13 +126,14 @@ async def get_audio_duration(file_path: str) -> float:
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE
     )
-    
+
     stdout, stderr = await process.communicate()
-    
+
     if process.returncode != 0:
         raise Exception(f"Ошибка ffprobe: {stderr.decode()}")
-    
+
     return float(stdout.decode().strip())
+
 
 async def safe_delete(file_path: str):
     """Безопасное удаление файла"""
@@ -142,6 +147,7 @@ async def safe_delete(file_path: str):
 # Запуск бота
 async def main():
     await dp.start_polling(bot)
+
 
 if __name__ == "__main__":
     asyncio.run(main())
