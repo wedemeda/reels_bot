@@ -28,12 +28,27 @@ bot = Bot(token=API_TOKEN, server=local_server)
 dp = Dispatcher()
 
 
-def link_from_inst(url):
-    if platform.system() == "Windows":
-        service = webdriver.FirefoxService(executable_path='geckodriver-v0.36.0-win64/geckodriver.exe')
-    else:
-        service = webdriver.FirefoxService(executable_path='geckodriver-v0.36.0-linux-aarch64/geckodriver')
+def get_geckodriver_path():
+    system = platform.system().lower()
+    arch = platform.machine().lower()
 
+    # Определяем правильный путь к драйверу
+    if system == 'windows':
+        driver_path = 'geckodriver-v0.36.0-win64/geckodriver.exe'
+    elif system == 'linux':
+        if 'arm' in arch or 'aarch' in arch:
+            driver_path = 'geckodriver-v0.36.0-linux-aarch64/geckodriver'
+        else:
+            driver_path = 'geckodriver-v0.36.0-linux64/geckodriver'
+
+    return driver_path
+
+def link_from_inst(url):
+   # if platform.system() == "Windows":
+   #     service = webdriver.FirefoxService(executable_path='geckodriver-v0.36.0-win64/geckodriver.exe')
+   # else:
+   #     service = webdriver.FirefoxService(executable_path='geckodriver-v0.36.0-linux-aarch64/geckodriver')
+    service = webdriver.FirefoxService(executable_path=get_geckodriver_path())
     options = webdriver.FirefoxOptions()
     options.add_argument("--headless")
     options.add_argument("--disable-gpu")
